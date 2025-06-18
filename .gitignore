@@ -1,0 +1,21 @@
+# node modules
+node_modules/
+
+# env file
+.env
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# system files
+.DS_Store
+Thumbs.db
+
+# optional build folders
+dist/
+build/
+
+# coverage
+coverage/

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+    (function() {
+        // This function contains all our security checks in one place.
+        const checkAuthStatus = () => {
+            const token = sessionStorage.getItem('authToken');
+
+            const isTokenExpired = (jwtToken) => {
+                if (!jwtToken) return true;
+                try {
+                    const payloadBase64 = jwtToken.split('.')[1];
+                    const decodedJson = atob(payloadBase64);
+                    const decoded = JSON.parse(decodedJson);
+                    return (Date.now() / 1000) > decoded.exp;
+                } catch (e) {
+                    return true;
+                }
+            };
+
+            if (!token || isTokenExpired(token)) {
+                console.log("Authentication failed. Redirecting to login.");
+                
+                // IMPORTANT: We use location.replace() here.
+                // This removes the current page from the browser's history,
+                // so the user cannot click "back" to get to it again from the login page.
+                window.location.replace('login.html');
+            }
+        };
+
+        // --- THE FIX IS HERE ---
+        
+        // 1. Run the check immediately when the page first loads.
+        checkAuthStatus();
+
+        // 2. Add an event listener for 'pageshow'.
+        // This event runs every time the page is displayed, including when navigating
+        // with the back/forward buttons, which re-activates it from the cache.
+        window.addEventListener('pageshow', function(event) {
+            // The 'persisted' property is true if the page was loaded from the cache.
+            if (event.persisted) {
+                console.log("Page was restored from cache. Re-checking auth status.");
+                checkAuthStatus();
+            }
+        });
+        
+    })();
+</script>
+    <title>بوابة التعليم الشامل - جامعة القدس المفتوحة</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mainstyles.css">
+    
+</head>
+<body>
+    <!-- لوحة التحكم الرئيسية -->
+    <div class="control-panel" id="controlPanel">
+    <div class="panel-header">
+        <div class="panel-title">نظام الوصول الشامل</div>
+        <button class="toggle-panel" onclick="toggleControlPanel()" aria-label="تبديل لوحة التحكم">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12h18M3 6h18M3 18h18"></path>
+            </svg>
+        </button>
+    </div>
+    
+    <div class="control-group">
+        <div class="control-label">الثيمات البصرية</div>
+        <button class="control-btn" onclick="changeTheme('default')" aria-label="الوضع الافتراضي">
+            <i class="fas fa-sun"></i>
+            الوضع الافتراضي
+        </button>
+        <button class="control-btn" onclick="changeTheme('protanopia')" aria-label="وضع عمى الأحمر بروتانوبيا">
+            <i class="fas fa-eye"></i>
+            عمى الأحمر (بروتانوبيا)
+        </button>
+        <button class="control-btn" onclick="changeTheme('deuteranopia')" aria-label="وضع عمى الأخضر ديوتيرانوبيا">
+            <i class="fas fa-eye"></i>
+            عمى الأخضر (ديوتيرانوبيا)
+        </button>
+        <button class="control-btn" onclick="changeTheme('tritanopia')" aria-label="وضع عمى الأزرق تريتانوبيا">
+            <i class="fas fa-eye"></i>
+            عمى الأزرق (تريتانوبيا)
+        </button>
+        <button class="control-btn" onclick="changeTheme('achromatopsia')" aria-label="وضع عمى الألوان الكلي">
+            <i class="fas fa-adjust"></i>
+            عمى الألوان الكلي
+        </button>
+        <button class="control-btn" onclick="changeTheme('high-contrast')" aria-label="وضع التباين العالي">
+            <i class="fas fa-circle-notch"></i>
+            تباين عالي
+        </button>
+    </div>
+    
+    <div class="control-group">
+        <div class="control-label">تكبير النصوص</div>
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>حجم النص:</span>
+                <span id="sizeLabel">عادي</span>
+            </div>
+            <input type="range" min="0.8" max="3" step="0.2" value="1" class="slider" id="sizeSlider" 
+                   aria-label="متحكم بحجم النص والعناصر" oninput="adjustSize(this.value)">
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="control-label">تكبير المحتوى</div>
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>حجم المحتوى:</span>
+                <span id="contentSizeLabel">عادي</span>
+            </div>
+            <input type="range" min="0.5" max="1.5" step="0.1" value="1" class="slider" id="contentSizeSlider" 
+                   aria-label="متحكم بحجم المحتوى" oninput="adjustContentSize(this.value)">
+        </div>
+    </div>
+
+    <div class="control-group">
+        <button class="control-btn logout-btn" onclick="logout()" aria-label="تسجيل الخروج">
+            <i class="fas fa-sign-out-alt"></i>
+            تسجيل الخروج
+        </button>
+    </div>
+    
+</div>
+
+    <!-- منطقة المحتوى الرئيسية -->
+    <div class="main-content">
+        <!-- الصفحة الرئيسية - اختيار التخصصات -->
+        <div class="page-container" id="specialtiesPage">
+            <h1 class="page-title">بوابة التعليم الشامل</h1>
+            <p style="text-align: center; margin-bottom: 30px; color: var(--light-text);">
+                نظام متكامل لدعم الطلاب ذوي الاحتياجات الخاصة في جامعة القدس المفتوحة
+            </p>
+            
+            <div class="course-details">
+                <div class="course-header">
+                    <div class="course-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <div>
+                        <h2 class="course-title">مرحباً بكم في نظام التعليم الشامل</h2>
+                        <p class="course-description">
+                            يوفر هذا النظام بيئة تعليمية متكاملة تلبي احتياجات جميع الطلاب بما في ذلك ذوي الاحتياجات الخاصة. 
+                            اختر التخصص الأكاديمي للبدء في رحلتك التعليمية.
+                        </p>
+                    </div>
+                </div>
+                
+                <h3 class="needs-title">التخصصات الأكاديمية</h3>
+                
+                <div class="buttons-grid" id="specialtiesGrid">
+                    <div class="loader" id="specialtiesLoader"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- صفحة المواد الدراسية -->
+        <div class="page-container" id="coursesPage" style="display: none;">
+            <button class="back-btn" onclick="goBack('specialtiesPage')" aria-label="العودة إلى التخصصات">
+                <i class="fas fa-arrow-right"></i>
+                العودة إلى التخصصات
+            </button>
+            
+            <div class="course-details">
+                <div class="course-header">
+                    <div class="course-icon" id="courseIcon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h2 class="course-title" id="courseTitle">اسم التخصص</h2>
+                        <p class="course-description" id="courseDescription">وصف مختصر عن التخصص</p>
+                    </div>
+                </div>
+                
+                <h3 class="needs-title">المواد الدراسية</h3>
+                
+                <div class="buttons-grid" id="coursesGrid">
+                    <div class="loader" id="coursesLoader"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- صفحة الاحتياجات الخاصة -->
+        <div class="page-container" id="needsPage" style="display: none;">
+            <button class="back-btn" onclick="goBack('coursesPage')" aria-label="العودة إلى المواد">
+                <i class="fas fa-arrow-right"></i>
+                العودة إلى المواد
+            </button>
+            
+            <div class="course-details">
+                <div class="course-header">
+                    <div class="course-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div>
+                        <h2 class="course-title" id="materialTitle">اسم المادة</h2>
+                        <p class="course-description">اختر طريقة العرض المناسبة لاحتياجاتك التعليمية</p>
+                    </div>
+                </div>
+                
+                <h3 class="needs-title">خيارات الوصول الشامل</h3>
+                
+                <div class="buttons-grid">
+                    <button class="need-btn" onclick="showContentPage('colorBlindness')" aria-label="خيارات عمى الألوان">
+                        <i class="fas fa-palette"></i>
+                        عمى الألوان
+                    </button>
+                    <button class="need-btn" onclick="showContentPage('deaf')" aria-label="خيارات الصم">
+                        <i class="fas fa-deaf"></i>
+                        الصم
+                    </button>
+                    <button class="need-btn" onclick="showContentPage('blind')" aria-label="خيارات الكفيف">
+                        <i class="fas fa-blind"></i>
+                        كفيف
+                    </button>
+                    <button class="need-btn" onclick="showContentPage('hyperopia')" aria-label="خيارات طول النظر">
+                        <i class="fas fa-search-plus"></i>
+                        طول نظر
+                    </button>
+                    <button class="need-btn" onclick="showContentPage('myopia')" aria-label="خيارات قصر النظر">
+                        <i class="fas fa-search-minus"></i>
+                        قصر نظر
+                    </button>
+                    <button class="need-btn" onclick="showContentPage('dyslexia')" aria-label="خيارات عسر القراءة">
+                        <i class="fas fa-spell-check"></i>
+                        عسر القراءة
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- صفحة المحتوى التعليمي -->
+        <div class="page-container" id="contentPage" style="display: none;">
+            <button class="back-btn" onclick="goBack('needsPage')" aria-label="العودة إلى خيارات الوصول">
+                <i class="fas fa-arrow-right"></i>
+                العودة إلى خيارات الوصول
+            </button>
+            
+            <div class="study-room">
+                <div class="room-header">
+                    <i class="fas fa-chalkboard-teacher course-icon"></i>
+                    <div>
+                        <h2 class="room-title" id="contentTitle">اسم المادة</h2>
+                        <p class="room-description" id="contentDescription">وصف المحتوى التعليمي</p>
+                    </div>
+                </div>
+                
+                <div class="content-container">
+                    <div class="content-section" id="videosSection">
+                        <h3 class="section-title">
+                            <i class="fas fa-video"></i>
+                            الفيديوهات التعليمية
+                        </h3>
+                        <ul class="content-list" id="videosList">
+                            <div class="loader" id="videosLoader"></div>
+                        </ul>
+                    </div>
+                    
+                    <div class="content-section" id="lecturesSection">
+                        <h3 class="section-title">
+                            <i class="fas fa-headphones"></i>
+                            المحاضرات الصوتية
+                        </h3>
+                        <ul class="content-list" id="lecturesList">
+                            <div class="loader" id="lecturesLoader"></div>
+                        </ul>
+                    </div>
+                    
+                    <div class="content-section" id="documentsSection">
+                        <h3 class="section-title">
+                            <i class="fas fa-file-alt"></i>
+                            الملفات والوثائق
+                        </h3>
+                        <ul class="content-list" id="documentsList">
+                            <div class="loader" id="documentsLoader"></div>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="study-room" id="studyRoomSection">
+                    <h3 class="section-title">
+                        <i class="fas fa-door-open"></i>
+                        غرفة الدراسة التفاعلية
+                    </h3>
+                    <p class="room-description">
+                        مساحة تعليمية تفاعلية تجمع كل الموارد التعليمية في مكان واحد مع إمكانية التفاعل الصوتي والتحكم الكامل لتسهيل العملية التعليمية.
+                    </p>
+                    
+                    <div class="room-features">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <h4 class="feature-title">تفاعل صوتي</h4>
+                            <p class="feature-desc">
+                                نظام تفاعل صوتي متكامل يقرأ المحتوى ويسمح بالتحكم الصوتي في التنقل بين الموارد.
+                            </p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <h4 class="feature-title">مواد متكاملة</h4>
+                            <p class="feature-desc">
+                                جميع الفيديوهات والمحاضرات والملفات مرتبطة في مكان واحد للوصول السريع.
+                            </p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-assistive-listening-systems"></i>
+                            </div>
+                            <h4 class="feature-title">دعم للغة الإشارة</h4>
+                            <p class="feature-desc">
+                                ترجمة فورية للغة الإشارة للطلاب الصم وضعاف السمع.
+                            </p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-text-height"></i>
+                            </div>
+                            <h4 class="feature-title">تخصيص النصوص</h4>
+                            <p class="feature-desc">
+                                إمكانية تعديل حجم الخط ونوعه ولونه لتناسب احتياجاتك البصرية.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <a href="studyroom.html" class="submit-btn" style="margin-top: 30px;" aria-label="دخول الغرفة الدراسية">
+    <button>
+        <i class="fas fa-door-open"></i>
+        دخول الغرفة الدراسية
+    </button>
+</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة المحتوى المنبثقة -->
+    <div class="modal-overlay" id="contentModal">
+        <button class="close-modal" onclick="closeModal()" aria-label="إغلاق النافذة">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">عنوان المحتوى</h3>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- سيتم إضافة المحتوى هنا ديناميكيًا -->
+            </div>
+            <div class="content-controls" id="contentControls" style="display: none;">
+                <button class="content-control-btn" onclick="zoomContent('in')" aria-label="تكبير المحتوى">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="content-control-btn" onclick="zoomContent('reset')" aria-label="إعادة ضبط حجم المحتوى">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button class="content-control-btn" onclick="zoomContent('out')" aria-label="تصغير المحتوى">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add a floating menu button to open the sidebar -->
+    <button id="openSidebarBtn" class="floating-menu-btn" aria-label="فتح قائمة الوصول" onclick="toggleControlPanel()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- نصوص مخفية لمساعدة قارئ الشاشة -->
+    <div class="screen-reader-only" aria-live="polite" id="screenReaderAnnouncement"></div>
+
+
+<script src="js/main.js"></script>
+<script>
+    // This script logs a visit every time the main page is loaded.
+    fetch('/api/visits/log', { method: 'POST' })
+        .then(response => {
+            if(response.ok) {
+                console.log('Visit logged successfully.');
+            } else {
+                console.error('Failed to log visit.');
+            }
+        })
+        .catch(error => console.error('Error logging visit:', error));
+</script>
+
+</body>
+</html>

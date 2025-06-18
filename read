@@ -1,0 +1,14 @@
+to make while production 
+// Define your CORS options
+const corsOptions = {
+  // Replace this with the actual domain of your live frontend application
+  origin: 'https://your-production-frontend-url.com', 
+  optionsSuccessStatus: 200 // For legacy browser support
+};
+
+app.use(cors(corsOptions));
+
+
+git checkout -b fix/pdfjs-vulnerability
+
+

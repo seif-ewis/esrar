@@ -1,0 +1,73 @@
+<!-- Enhanced chat UI (studyroom.html + partial updates) -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esrar GPT - Study Room</title>
+    <link rel="stylesheet" href="./css/studyroom.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <h1 class="ES"><strong>ESRAR GPT</strong></h1>
+    <div class="page-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <button id="new-chat-btn" class="new-chat-btn">
+                    <i class="fas fa-plus"></i>
+                    محادثة جديدة
+                </button>
+            </div>
+            <div class="chat-history">
+                <p>سجل المحادثات</p>
+                <ul id="chat-history-list"></ul>
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="username-display"></span>
+                </div>
+                
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div id="chat-container" class="chat-container">
+                <div id="welcome-screen" class="welcome-screen">
+                    <h1 class="logo">Esrar GPT</h1>
+                    <div class="example-cards">
+                        <div class="card" data-prompt="اشرح لي نظرية فيثاغورس">
+                            <h4>شرح المفاهيم</h4>
+                            <p>مثل "اشرح لي نظرية فيثاغورس"</p>
+                        </div>
+                        <div class="card" data-prompt="ما هي خطوات كتابة مقال جيد؟">
+                            <h4>تلخيص الأفكار</h4>
+                            <p>مثل "لخص لي خطوات كتابة مقال"</p>
+                        </div>
+                        <div class="card" data-prompt="اكتب لي كود بلغة بايثون لترتيب قائمة">
+                            <h4>المساعدة في البرمجة</h4>
+                            <p>مثل "اكتب كود بايثون لترتيب قائمة"</p>
+                        </div>
+                        <div class="card" data-prompt="ما هي عاصمة أستراليا؟">
+                            <h4>الإجابة على الأسئلة العامة</h4>
+                            <p>مثل "ما هي عاصمة أستراليا؟"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <form id="chat-form" class="input-form">
+                    <textarea id="userInput" placeholder="اسأل Esrar GPT أي شيء..." rows="1" aria-label="صندوق الإدخال"></textarea>
+                    <button id="mic-btn" type="button" aria-label="استخدام الميكروفون"><i class="fas fa-microphone"></i></button>
+                    <button id="send-btn" type="submit" aria-label="إرسال"><i class="fas fa-paper-plane"></i></button>
+                </form>
+                <p class="disclaimer">Esrar GPT قد يرتكب أخطاءً. يرجى التحقق من المعلومات المهمة.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="./js/studyroom.js"></script>
+</body>
+</html>

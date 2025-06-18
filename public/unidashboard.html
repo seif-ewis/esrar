@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+<script>
+    (function() {
+        // This function contains all our security checks in one place.
+        const checkAuthStatus = () => {
+            const token = sessionStorage.getItem('authToken');
+
+            const isTokenExpired = (jwtToken) => {
+                if (!jwtToken) return true;
+                try {
+                    const payloadBase64 = jwtToken.split('.')[1];
+                    const decodedJson = atob(payloadBase64);
+                    const decoded = JSON.parse(decodedJson);
+                    return (Date.now() / 1000) > decoded.exp;
+                } catch (e) {
+                    return true;
+                }
+            };
+
+            if (!token || isTokenExpired(token)) {
+                console.log("Authentication failed. Redirecting to login.");
+                
+                // IMPORTANT: We use location.replace() here.
+                // This removes the current page from the browser's history,
+                // so the user cannot click "back" to get to it again from the login page.
+                window.location.replace('login.html');
+            }
+        };
+
+        // --- THE FIX IS HERE ---
+        
+        // 1. Run the check immediately when the page first loads.
+        checkAuthStatus();
+
+        // 2. Add an event listener for 'pageshow'.
+        // This event runs every time the page is displayed, including when navigating
+        // with the back/forward buttons, which re-activates it from the cache.
+        window.addEventListener('pageshow', function(event) {
+            // The 'persisted' property is true if the page was loaded from the cache.
+            if (event.persisted) {
+                console.log("Page was restored from cache. Re-checking auth status.");
+                checkAuthStatus();
+            }
+        });
+        
+    })();
+</script>
+    
+    <title>نظام إدارة المحتوى التعليمي - جامعة القدس المفتوحة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/dashstyles.css">
+</head>
+<body>
+    <div class="control-panel" id="controlPanel">
+        <div class="panel-header">
+            <div class="panel-title">نظام الوصول الشامل</div>
+            <button class="toggle-panel" onclick="toggleSidebar()" aria-label="تبديل لوحة التحكم">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">الثيمات البصرية</div>
+            <button class="control-btn" onclick="changeTheme('default')" aria-label="الوضع الافتراضي">
+                <i class="fas fa-sun"></i>
+                الوضع الافتراضي
+            </button>
+            <button class="control-btn" onclick="changeTheme('protanopia')" aria-label="وضع عمى الأحمر بروتانوبيا">
+                <i class="fas fa-eye"></i>
+                عمى الأحمر (بروتانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('deuteranopia')" aria-label="وضع عمى الأخضر ديوتيرانوبيا">
+                <i class="fas fa-eye"></i>
+                عمى الأخضر (ديوتيرانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('tritanopia')" aria-label="وضع عمى الأزرق تريتانوبيا">
+                <i class="fas fa-eye"></i>
+                عمى الأزرق (تريتانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('achromatopsia')" aria-label="وضع عمى الألوان الكلي">
+                <i class="fas fa-adjust"></i>
+                عمى الألوان الكلي
+            </button>
+            <button class="control-btn" onclick="changeTheme('high-contrast')" aria-label="وضع التباين العالي">
+                <i class="fas fa-circle-notch"></i>
+                تباين عالي
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">تكبير النصوص</div>
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>حجم النص:</span>
+                    <span id="sizeLabel">عادي</span>
+                </div>
+                <input type="range" min="0.8" max="3" step="0.2" value="1" class="slider" id="sizeSlider" 
+                       aria-label="متحكم بحجم النص والعناصر" oninput="adjustSize(this.value)">
+            </div>
+        </div>
+
+
+
+
+        <div class="control-group">
+            <div class="control-label">تكبير المحتوى</div>
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>حجم المحتوى:</span>
+                    <span id="contentSizeLabel">عادي</span>
+                </div>
+                <input type="range" min="0.5" max="1.5" step="0.1" value="1" class="slider" id="contentSizeSlider" 
+                       aria-label="متحكم بحجم المحتوى" oninput="adjustContentSize(this.value)">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="control-label">تكبير المحتوى</div>
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>حجم المحتوى:</span>
+                    <span id="contentSizeLabel">عادي</span>
+                </div>
+                <input type="range" min="0.5" max="1.5" step="0.1" value="1" class="slider" id="contentSizeSlider" 
+                       aria-label="متحكم بحجم المحتوى" oninput="adjustContentSize(this.value)">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <button class="control-btn logout-btn" onclick="logout()" aria-label="تسجيل الخروج">
+                <i class="fas fa-sign-out-alt"></i>
+                تسجيل الخروج
+            </button>
+        </div>
+
+
+
+    </div>
+
+    <div class="main-content">
+        <div class="admin-container">
+            <h1 class="admin-title">لوحة التحكم الإدارية</h1>
+            
+            <div class="admin-tabs">
+                <div class="admin-tab active" onclick="openAdminTab('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i> لوحة التحكم
+                </div>
+                <div class="admin-tab" onclick="openAdminTab('specialties')">
+                    <i class="fas fa-graduation-cap"></i> التخصصات
+                </div>
+                <div class="admin-tab" onclick="openAdminTab('courses')">
+                    <i class="fas fa-book"></i> المواد الدراسية
+                </div>
+                <div class="admin-tab" onclick="openAdminTab('videos')">
+                    <i class="fas fa-video"></i> الفيديوهات
+                </div>
+                <div class="admin-tab" onclick="openAdminTab('lectures')">
+                    <i class="fas fa-headphones"></i> المحاضرات
+                </div>
+                <div class="admin-tab" onclick="openAdminTab('documents')">
+                    <i class="fas fa-file-alt"></i> الوثائق
+                </div>
+                <div class="admin-tab" onclick="openAdminTab('users')">
+                    <i class="fas fa-users"></i> المستخدمون
+                </div>
+            </div>
+            
+            <div class="admin-content active" id="dashboardTab">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="stat-value" id="specialtiesCount">0</div>
+                        <div class="stat-label">عدد التخصصات</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon success">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-value" id="coursesCount">0</div>
+                        <div class="stat-label">عدد المواد</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon warning">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="stat-value" id="videosCount">0</div>
+                        <div class="stat-label">عدد الفيديوهات</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon danger">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-value" id="usersCount">0</div>
+                        <div class="stat-label">عدد المستخدمين</div>
+                    </div>
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-line"></i>
+                        إحصائيات الزيارات
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="visitsChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-book-open"></i>
+                        آخر المواد المضافة
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>اسم المادة</th>
+                                    <th>التخصص</th>
+                                    <th>تاريخ الإضافة</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentCoursesTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-content" id="specialtiesTab">
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        إضافة تخصص جديد
+                    </h3>
+                    <form id="addSpecialtyForm">
+                        <div class="form-group">
+                            <label class="form-label">اسم التخصص</label>
+                            <input type="text" class="form-control" id="specialtyName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">وصف التخصص</label>
+                            <textarea class="form-control form-textarea" id="specialtyDescription" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">أيقونة التخصص</label>
+                            <select class="form-control" id="specialtyIcon">
+                                <option value="fas fa-laptop-code">تكنولوجيا المعلومات</option>
+                                <option value="fas fa-chart-line">علوم إدارية</option>
+                                <option value="fas fa-hands-helping">تربية خاصة</option>
+                                <option value="fas fa-book-open">لغة عربية</option>
+                                <option value="fas fa-users">خدمة اجتماعية</option>
+                                <option value="fas fa-mosque">دراسات إسلامية</option>
+                                <option value="fas fa-flask">علوم</option>
+                                <option value="fas fa-heartbeat">طب</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> حفظ التخصص
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-list"></i>
+                        قائمة التخصصات
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم التخصص</th>
+                                    <th>الوصف</th>
+                                    <th>عدد المواد</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="specialtiesTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-content" id="coursesTab">
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        إضافة مادة جديدة
+                    </h3>
+                    <form id="addCourseForm">
+                        <div class="form-group">
+                            <label class="form-label">التخصص</label>
+                            <select class="form-control" id="courseSpecialty" required>
+                                <option value="">اختر التخصص...</option>
+                                </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">اسم المادة</label>
+                            <input type="text" class="form-control" id="courseName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">وصف المادة</label>
+                            <textarea class="form-control form-textarea" id="courseDescription" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">رمز المادة</label>
+                            <input type="text" class="form-control" id="courseCode">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> حفظ المادة
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-list"></i>
+                        قائمة المواد الدراسية
+                    </h3>
+                    <div class="form-group" style="max-width: 300px;">
+                        <label class="form-label">تصفية حسب التخصص</label>
+                        <select class="form-control" id="filterCourses">
+                            <option value="all">جميع التخصصات</option>
+                            </select>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم المادة</th>
+                                    <th>التخصص</th>
+                                    <th>الوصف</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coursesTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-content" id="videosTab">
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        إضافة فيديو جديد
+                    </h3>
+                    <form id="addVideoForm">
+                        <div class="form-group">
+                            <label class="form-label">المادة الدراسية</label>
+                            <select class="form-control" id="videoCourse" required>
+                                <option value="">اختر المادة...</option>
+                                </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">عنوان الفيديو</label>
+                            <input type="text" class="form-control" id="videoTitle" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">رابط الفيديو (YouTube)</label>
+                            <input type="url" class="form-control" id="videoUrl" required>
+                        </div>
+
+
+
+<div class="form-group">
+    <label class="form-label">الفئة المخصصة (Accessibility Need)</label>
+    <select class="form-control" id="videoAccessibilityNeed" name="accessibilityNeed">
+        <option value="general" selected>عام (General)</option>
+        <option value="colorBlindness">عمى الألوان (Color Blindness)</option>
+        <option value="deaf">الصم (Deaf)</option>
+        <option value="blind">الكفيف (Blind)</option>
+        <option value="hyperopia">طول النظر (Hyperopia)</option>
+        <option value="myopia">قصر النظر (Myopia)</option>
+        <option value="dyslexia">عسر القراءة (Dyslexia)</option>
+    </select>
+</div>
+
+                        
+                        <div class="form-group">
+                            <label class="form-label">وصف الفيديو</label>
+                            <textarea class="form-control form-textarea" id="videoDescription" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">مدة الفيديو (دقائق)</label>
+                            <input type="number" class="form-control" id="videoDuration">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> حفظ الفيديو
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-list"></i>
+                        قائمة الفيديوهات التعليمية
+                    </h3>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+    <div class="form-group" style="flex: 1;">
+        <label class="form-label">تصفية حسب المادة</label>
+        <select class="form-control" id="filterVideos">
+            <option value="all">جميع المواد</option>
+        </select>
+    </div>
+    <div class="form-group" style="flex: 1;">
+        <label class="form-label">تصفية حسب الفئة</label>
+        <select class="form-control" id="filterVideosByNeed">
+            <option value="all">جميع الفئات</option>
+            <option value="general">عام (General)</option>
+            <option value="colorBlindness">عمى الألوان</option>
+            <option value="deaf">الصم</option>
+            <option value="blind">الكفيف</option>
+            <option value="hyperopia">طول النظر</option>
+            <option value="myopia">قصر النظر</option>
+            <option value="dyslexia">عسر القراءة</option>
+        </select>
+    </div>
+</div>
+                    
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>عنوان الفيديو</th>
+                                    <th>المادة</th>
+                                    <th>المدة</th>
+                                    <th>الفئة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="videosTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-content" id="lecturesTab">
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        إضافة محاضرة صوتية
+                    </h3>
+                    <form id="addLectureForm">
+    <div class="form-group">
+        <label class="form-label">المادة الدراسية</label>
+        <select class="form-control" id="lectureCourse" name="courseId" required>
+            <option value="">اختر المادة...</option>
+            </select>
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">عنوان المحاضرة</label>
+        <input type="text" class="form-control" id="lectureTitle" name="title" required>
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">رفع ملف صوتي</label>
+        <input type="file" class="form-control" id="lectureFile" name="lectureFile" accept="audio/*" required>
+    </div>
+    
+
+<div class="form-group">
+    <label class="form-label">الفئة المخصصة (Accessibility Need)</label>
+    <select class="form-control" id="lectureAccessibilityNeed" name="accessibilityNeed">
+        <option value="general" selected>عام (General)</option>
+        <option value="colorBlindness">عمى الألوان (Color Blindness)</option>
+        <option value="deaf">الصم (Deaf)</option>
+        <option value="blind">الكفيف (Blind)</option>
+        <option value="hyperopia">طول النظر (Hyperopia)</option>
+        <option value="myopia">قصر النظر (Myopia)</option>
+        <option value="dyslexia">عسر القراءة (Dyslexia)</option>
+    </select>
+</div>
+
+
+
+    <div class="form-group">
+        <label class="form-label">وصف المحاضرة</label>
+        <textarea class="form-control form-textarea" id="lectureDescription" name="description" required></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">مدة المحاضرة (دقائق)</label>
+        <input type="number" class="form-control" id="lectureDuration" name="duration">
+    </div>
+    
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> حفظ المحاضرة
+    </button>
+</form>
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-list"></i>
+                        قائمة المحاضرات الصوتية
+                    </h3>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+    <div class="form-group" style="flex: 1;">
+        <label class="form-label">تصفية حسب المادة</label>
+        <select class="form-control" id="filterLectures">
+            <option value="all">جميع المواد</option>
+        </select>
+    </div>
+    <div class="form-group" style="flex: 1;">
+        <label class="form-label">تصفية حسب الفئة</label>
+        <select class="form-control" id="filterLecturesByNeed">
+            <option value="all">جميع الفئات</option>
+            <option value="general">عام (General)</option>
+            <option value="colorBlindness">عمى الألوان</option>
+            <option value="deaf">الصم</option>
+            <option value="blind">الكفيف</option>
+            <option value="hyperopia">طول النظر</option>
+            <option value="myopia">قصر النظر</option>
+            <option value="dyslexia">عسر القراءة</option>
+        </select>
+    </div>
+</div>
+                    
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>عنوان المحاضرة</th>
+                                    <th>المادة</th>
+                                    <th>المدة</th>
+                                    <th>الفئة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lecturesTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-content" id="documentsTab">
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        إضافة وثيقة جديدة
+                    </h3>
+                    <form id="addDocumentForm">
+    <div class="form-group">
+        <label class="form-label">المادة الدراسية</label>
+        <select class="form-control" id="documentCourse" name="courseId" required>
+            <option value="">اختر المادة...</option>
+            </select>
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">عنوان الوثيقة</label>
+        <input type="text" class="form-control" id="documentTitle" name="title" required>
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">رفع ملف</label>
+        <input type="file" class="form-control" id="documentFile" name="documentFile" accept=".pdf,.doc,.docx" required>
+    </div>
+    
+
+    <div class="form-group">
+    <label class="form-label">الفئة المخصصة (Accessibility Need)</label>
+    <select class="form-control" id="documentAccessibilityNeed" name="accessibilityNeed">
+        <option value="general" selected>عام (General)</option>
+        <option value="colorBlindness">عمى الألوان (Color Blindness)</option>
+        <option value="deaf">الصم (Deaf)</option>
+        <option value="blind">الكفيف (Blind)</option>
+        <option value="hyperopia">طول النظر (Hyperopia)</option>
+        <option value="myopia">قصر النظر (Myopia)</option>
+        <option value="dyslexia">عسر القراءة (Dyslexia)</option>
+    </select>
+</div>
+
+
+
+
+
+    <div class="form-group">
+        <label class="form-label">وصف الوثيقة</label>
+        <textarea class="form-control form-textarea" id="documentDescription" name="description" required></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">نوع الوثيقة</label>
+        <select class="form-control" id="documentType" name="type">
+            <option value="lecture">محاضرة</option>
+            <option value="summary">ملخص</option>
+            <option value="exercise">تمارين</option>
+            <option value="exam">امتحان</option>
+            <option value="other">أخرى</option>
+        </select>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> حفظ الوثيقة
+    </button>
+</form>
+
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-list"></i>
+                        قائمة الوثائق والملفات
+                    </h3>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+    <div class="form-group" style="flex: 1;">
+        <label class="form-label">تصفية حسب المادة</label>
+        <select class="form-control" id="filterDocuments">
+            <option value="all">جميع المواد</option>
+        </select>
+    </div>
+    <div class="form-group" style="flex: 1;">
+        <label class="form-label">تصفية حسب الفئة</label>
+        <select class="form-control" id="filterDocumentsByNeed">
+            <option value="all">جميع الفئات</option>
+            <option value="general">عام (General)</option>
+            <option value="colorBlindness">عمى الألوان</option>
+            <option value="deaf">الصم</option>
+            <option value="blind">الكفيف</option>
+            <option value="hyperopia">طول النظر</option>
+            <option value="myopia">قصر النظر</option>
+            <option value="dyslexia">عسر القراءة</option>
+        </select>
+    </div>
+</div>
+                    
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>عنوان الوثيقة</th>
+                                    <th>المادة</th>
+                                    <th>النوع</th>
+                                    <th>الفئة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-content" id="usersTab">
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        إضافة مستخدم جديد
+                    </h3>
+                    <form id="addUserForm">
+                        <div class="form-group">
+                            <label class="form-label">اسم المستخدم</label>
+                            <input type="text" class="form-control" id="userName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" class="form-control" id="userEmail" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">كلمة المرور</label>
+                            <input type="password" class="form-control" id="userPassword" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">تأكيد كلمة المرور</label>
+                            <input type="password" class="form-control" id="userConfirmPassword" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">نوع المستخدم</label>
+                            <select class="form-control" id="userRole" required>
+                                <option value="admin">مدير النظام</option>
+                                <option value="student" selected>طالب</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> حفظ المستخدم
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="admin-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-list"></i>
+                        قائمة المستخدمين
+                    </h3>
+                    <div class="form-group" style="max-width: 300px;">
+                        <label class="form-label">تصفية حسب النوع</label>
+                        <select class="form-control" id="filterUsers">
+                            <option value="all">جميع المستخدمين</option>
+                            <option value="admin">مديرو النظام</option>
+                            <option value="student">الطلاب</option>
+                        </select>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم المستخدم</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>النوع</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <button class="close-modal" onclick="closeEditModal()" aria-label="إغلاق النافذة">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="modal-content">
+            <h3 class="modal-title" id="editModalTitle">تعديل العنصر</h3>
+            <div class="modal-body" id="editModalBody">
+                </div>
+            <button id="editModalSaveBtn" style="display:none"></button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmModalTitle">تأكيد الإجراء</h3>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                هل أنت متأكد من أنك تريد حذف هذا العنصر؟
+            </div>
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+                <button class="btn btn-danger" id="confirmActionBtn">
+                    <i class="fas fa-check"></i> تأكيد
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen-reader-only" aria-live="polite" id="screenReaderAnnouncement"></div>
+
+    <button id="openSidebarBtn" class="floating-menu-btn" aria-label="فتح القائمة الجانبية" type="button">
+        <i class="fas fa-bars"></i>
+    </button>
+   
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ 
+    <script src="js/dashboard.js"></script>
+<script>
+// Add this to your HTML file
+fetch('/api/specialties')
+  .then(response => response.json())
+  .then(data => console.log('Specialties:', data))
+  .catch(error => console.error('Error:', error));
+</script>
+</body>
+</html>

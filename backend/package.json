@@ -1,0 +1,30 @@
+{
+  "name": "educational-cms",
+  "version": "1.0.0",
+  "description": "Educational CMS for Al-Quds Open University",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@bytescale/sdk": "^3.52.0",
+    "@langchain/google-genai": "^0.2.12",
+    "axios": "^1.9.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "marked": "^15.0.12",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.15.1",
+    "multer": "^2.0.1",
+    "openai": "^5.3.0",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^5.3.31",
+    "youtube-transcript": "^1.2.1"
+  }
+}

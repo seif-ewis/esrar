@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جامعات سلطنة عمان - نظام الوصول الشامل</title>
+<script>
+    (function() {
+        // This function contains all our security checks in one place.
+        const checkAuthStatus = () => {
+            const token = sessionStorage.getItem('authToken');
+
+            const isTokenExpired = (jwtToken) => {
+                if (!jwtToken) return true;
+                try {
+                    const payloadBase64 = jwtToken.split('.')[1];
+                    const decodedJson = atob(payloadBase64);
+                    const decoded = JSON.parse(decodedJson);
+                    return (Date.now() / 1000) > decoded.exp;
+                } catch (e) {
+                    return true;
+                }
+            };
+
+            if (!token || isTokenExpired(token)) {
+                console.log("Authentication failed. Redirecting to login.");
+                
+                // IMPORTANT: We use location.replace() here.
+                // This removes the current page from the browser's history,
+                // so the user cannot click "back" to get to it again from the login page.
+                window.location.replace('login.html');
+            }
+        };
+
+        // --- THE FIX IS HERE ---
+        
+        // 1. Run the check immediately when the page first loads.
+        checkAuthStatus();
+
+        // 2. Add an event listener for 'pageshow'.
+        // This event runs every time the page is displayed, including when navigating
+        // with the back/forward buttons, which re-activates it from the cache.
+        window.addEventListener('pageshow', function(event) {
+            // The 'persisted' property is true if the page was loaded from the cache.
+            if (event.persisted) {
+                console.log("Page was restored from cache. Re-checking auth status.");
+                checkAuthStatus();
+            }
+        });
+        
+    })();
+</script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --text-color: #333333;
+            --light-text: #7f8c8d;
+            --background-color: #ffffff;
+            --input-bg: #f9f9f9;
+            --input-border: #e0e0e0;
+            --focus-border: #3498db;
+            --button-hover: #2980b9;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --text-size: 16px;
+            --icon-scale: 1;
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --panel-width: 300px;
+            --braille-size: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.8;
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* لوحة التحكم الرئيسية - تصميم متطور */
+        .control-panel {
+            width: var(--panel-width);
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 25px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            overflow-y: auto;
+            height: 100vh;
+            position: fixed;
+            transition: transform 0.3s ease;
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+        }
+
+        .panel-collapsed {
+            transform: translateX(calc(var(--panel-width) * -1 + 60px));
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .toggle-panel {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-panel:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: rotate(90deg);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 20px;
+        }
+
+        .control-group:last-child {
+            border-bottom: none;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.5px;
+            position: relative;
+            padding-right: 10px;
+        }
+
+        .control-label::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 16px;
+            background: var(--secondary-color);
+            border-radius: 2px;
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            text-align: right;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 3px solid transparent;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .control-btn.active {
+            background: var(--accent-color);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            border-left: 3px solid white;
+        }
+
+        .control-btn i {
+            font-size: 1.2rem;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .slider-container {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .slider {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            border: 3px solid white;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--button-hover);
+        }
+
+        /* منطقة المحتوى الرئيسية */
+        .main-content {
+            flex: 1;
+            margin-right: var(--panel-width);
+            transition: margin 0.3s ease;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .panel-collapsed ~ .main-content {
+            margin-right: 0;
+        }
+
+        /* منطقة الجامعات */
+        .universities-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .university-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            text-align: center;
+            border: 1px solid var(--input-border);
+        }
+
+        .university-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .university-link {
+            display: block;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .university-logo {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            padding: 15px;
+            background-color: white;
+            border-bottom: 1px solid var(--input-border);
+        }
+
+        .university-name {
+            padding: 12px;
+            font-weight: 700;
+            font-size: calc(var(--text-size) * 1.1);
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            font-size: calc(var(--text-size) * 2);
+            font-weight: 800;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, var(--secondary-color), var(--accent-color));
+            border-radius: 3px;
+        }
+
+        /* مربع البحث */
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid var(--input-border);
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            transition: var(--transition);
+            background-color: var(--input-bg);
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--focus-border);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--light-text);
+            font-size: 1.2rem;
+        }
+
+        /* أنظمة الثيمات لعمى الألوان */
+       [data-theme="protanopia"] {
+          --primary-color: #3a7ca5;        
+          --secondary-color: #f0a202;      
+         --button-hover: #d18b00;         
+          --accent-color: #00a6a6;         
+          --text-color: #1a1a1a;          
+          --background-color: #f3f3f3;    
+         --input-bg: #ffffff;            
+          --input-border: #3a7ca5;         
+}
+
+[data-theme="deuteranopia"] {
+        --primary-color: #057dc2;      
+        --secondary-color:  #057dc2;    
+        --button-hover: #005f99;      
+        --accent-color: #56B4E9;     
+         --text-color: #111111;        
+         --background-color: #F0F0F0;   
+         --input-bg: #FFFFFF;          
+          --input-border: #0072B2;       
+}
+
+
+ 
+[data-theme="tritanopia"] {
+          --primary-color: #880000;     
+        --secondary-color: #136621;   
+        --button-hover: #b30000;      
+        --accent-color: #9b009b;      
+         --text-color: #111111;        
+       --background-color: #f7f7f7;  
+        --input-bg: #ffffff;          
+      --input-border: #003f88;      
+}
+
+        [data-theme="achromatopsia"] {
+            --primary-color: #555555;
+            --secondary-color: #888888;
+            --button-hover: #777777;
+            --accent-color: #222222;
+            --text-color: #333;
+            --background-color: #f5f5f5;
+            --input-bg: #e8e8e8;
+            --input-border: #d0d0d0;
+        }
+
+        [data-theme="high-contrast"] {
+            --primary-color: #000000;
+            --secondary-color: #0e0e0e;
+            --button-hover: #cccccc;
+            --accent-color: #ff0000;
+            --text-color: #3d3d3d;
+            --background-color: #000000;
+            --input-bg: #0a0909;
+            --input-border: #ffffff;
+        }
+        /* نظام برايل للمكفوفين */
+        .braille-mode {
+            --text-size: 20px;
+            --primary-color: #000000;
+            --secondary-color: #333333;
+            --accent-color: #555555;
+            --text-color: #000000;
+            --background-color: #ffffff;
+            --input-bg: #f0f0f0;
+            --input-border: #cccccc;
+        }
+
+        .braille-mode .university-name {
+            position: relative;
+            padding-right: 30px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .braille-mode .university-name::after {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: var(--braille-size);
+            height: var(--braille-size);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/></svg>');
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+
+        /* نظام الاهتزاز للمكفوفين */
+        .vibration-alert {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: var(--accent-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            font-size: calc(var(--text-size) * 0.9);
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: vibrate 0.3s linear infinite both;
+        }
+
+        @keyframes vibrate {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        /* مؤشرات التحكم الصوتي */
+        .voice-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: calc(var(--text-size) * 0.9);
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .sound-wave {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            height: 24px;
+        }
+
+        .wave-bar {
+            width: 5px;
+            background: white;
+            border-radius: 3px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { height: 60%; animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { height: 30%; animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { height: 75%; animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { height: 45%; animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { height: 60%; animation-delay: 0.5s; }
+
+        @keyframes wave {
+            0%, 100% { height: 20%; }
+            50% { height: 100%; }
+        }
+
+        /* إشعارات الصوت */
+        .voice-feedback {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--secondary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            font-size: calc(var(--text-size) * 0.9);
+            font-weight: 600;
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 400px;
+        }
+
+        /* تحسينات للجوال */
+        @media (max-width: 992px) {
+            .control-panel {
+                transform: translateX(calc(var(--panel-width) * -1 + 60px));
+            }
+            
+            .panel-collapsed {
+                transform: translateX(calc(var(--panel-width) * -1));
+            }
+            
+            .main-content {
+                margin-right: 0;
+                padding: 20px 15px;
+            }
+            
+            .universities-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 576px) {
+            :root {
+                --panel-width: 280px;
+                --text-size: 18px;
+            }
+            
+            .universities-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+            
+            .university-logo {
+                height: 100px;
+            }
+        }
+
+        /* تحسينات للواجهة المظلمة */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --text-color: #f0f0f0;
+                --background-color: #121212;
+                --input-bg: #1e1e1e;
+                --input-border: #333;
+                --light-text: #aaa;
+            }
+            
+            .university-card:not([data-theme]) {
+                background: #1e1e1e;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+            
+            .control-panel:not([data-theme]) {
+                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- لوحة التحكم الرئيسية -->
+    <div class="control-panel" id="controlPanel">
+        <div class="panel-header">
+            <div class="panel-title">نظام الوصول الشامل</div>
+            <button class="toggle-panel" onclick="toggleControlPanel()" aria-label="تبديل لوحة التحكم">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12h18M3 6h18M3 18h18"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">الثيمات البصرية</div>
+            <button class="control-btn" onclick="changeTheme('default')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                الوضع الافتراضي
+            </button>
+            <button class="control-btn" onclick="changeTheme('protanopia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="red"></circle>
+                    <path d="M12 16a4 4 0 0 0 0-8" stroke="blue"></path>
+                </svg>
+                عمى الأحمر (بروتانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('deuteranopia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="green"></circle>
+                    <path d="M12 8a4 4 0 0 1 0 8" stroke="red"></path>
+                </svg>
+                عمى الأخضر (ديوتيرانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('tritanopia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="blue"></circle>
+                    <path d="M12 16a4 4 0 0 1 0-8" stroke="yellow"></path>
+                </svg>
+                عمى الأزرق (تريتانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('achromatopsia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                </svg>
+                عمى الألوان الكلي
+            </button>
+            <button class="control-btn" onclick="changeTheme('high-contrast')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="black" fill="white"></circle>
+                    <circle cx="12" cy="12" r="6" stroke="black" fill="black"></circle>
+                </svg>
+                تباين عالي
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">أنظمة المكفوفين</div>
+            <button class="control-btn" id="brailleBtn" onclick="toggleBrailleMode()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="6" cy="6" r="3"></circle>
+                    <circle cx="18" cy="6" r="3"></circle>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <circle cx="18" cy="18" r="3"></circle>
+                </svg>
+                نظام برايل
+            </button>
+            <button class="control-btn" id="voiceControlBtn" onclick="toggleVoiceControl()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                التحكم الصوتي
+            </button>
+            <button class="control-btn" onclick="readPageContent()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+                قراءة الصفحة
+            </button>
+            <button class="control-btn" onclick="activateVibration()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                نظام الاهتزاز
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">تكبير النصوص</div>
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>حجم النص:</span>
+                    <span id="sizeLabel">عادي</span>
+                </div>
+                <input type="range" min="0.8" max="3" step="0.2" value="1" class="slider" id="sizeSlider" 
+                       aria-label="متحكم بحجم النص والعناصر" oninput="adjustSize(this.value)">
+            </div>
+        </div>
+    </div>
+
+    <!-- مؤشر التحكم الصوتي -->
+    <div class="voice-indicator" id="voiceIndicator">
+        <div class="sound-wave">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+        </div>
+        <span>جاري الاستماع...</span>
+    </div>
+
+    <!-- نظام الاهتزاز -->
+    <div class="vibration-alert" id="vibrationAlert" style="display: none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span>نظام الاهتزاز مفعل</span>
+    </div>
+
+    <!-- منطقة المحتوى الرئيسية -->
+    <div class="main-content">
+        <h1 class="page-title">جامعات سلطنة عمان</h1>
+        
+        <!-- مربع البحث -->
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن جامعة..." aria-label="بحث عن جامعة">
+            <div class="search-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- قائمة الجامعات -->
+        <div class="universities-container" id="universitiesContainer">
+            <!-- جامعة السلطان قابوس -->
+            <div class="university-card" data-name="جامعة السلطان قابوس">
+                <a href="/omanlogin/qabosuni.html" class="university-link">
+                    <img src="data:image/png;base64,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" alt="شعار جامعة السلطان قابوس" class="university-logo">
+                    <div class="university-name">جامعة السلطان قابوس</div>
+                </a>
+            </div>
+            
+            <!-- جامعة التقنية والعلوم التطبيقية -->
+            <div class="university-card" data-name="جامعة التقنية والعلوم التطبيقية">
+                <a href="/omanlogin/teqaniuni.html" class="university-link">
+                    <img src="data:image/png;base64,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" alt="شعار جامعة التقنية والعلوم التطبيقية" class="university-logo">
+                    <div class="university-name">جامعة التقنية والعلوم التطبيقية</div>
+                </a>
+            </div>
+            
+            <!-- جامعة البريمي -->
+            <div class="university-card" data-name="جامعة البريمي">
+                <a href="/omanlogin/bramiuni.html" class="university-link">
+                    <img src="data:image/png;base64,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" alt="شعار جامعة البريمي" class="university-logo">
+                    <div class="university-name">جامعة البريمي</div>
+                </a>
+            </div>
+            
+            <!-- جامعة ظفار -->
+            <div class="university-card" data-name="جامعة ظفار">
+                <a href="/omanlogin/thafaruni.html" class="university-link">
+                    <img src="data:image/jpeg;base64,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" alt="شعار جامعة ظفار" class="university-logo">
+                    <div class="university-name">جامعة ظفار</div>
+                </a>
+            </div>
+            
+            <!-- الجامعة الألمانية للتكنولوجيا -->
+            <div class="university-card" data-name="الجامعة الألمانية للتكنولوجيا">
+                <a href="/omanlogin/germanuni.html" class="university-link">
+                    <img src="data:image/jpeg;base64,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" alt="شعار الجامعة الألمانية للتكنولوجيا" class="university-logo">
+                    <div class="university-name">الجامعة الألمانية للتكنولوجيا</div>
+                </a>
+            </div>
+            
+            <!-- جامعة صحار -->
+            <div class="university-card" data-name="جامعة صحار">
+                <a href="/omanlogin/sahaaruni.html" class="university-link">
+                    <img src="data:image/png;base64,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" alt="شعار جامعة صحار" class="university-logo">
+                    <div class="university-name">جامعة صحار</div>
+                </a>
+            </div>
+            
+            <!-- جامعة نزوى -->
+            <div class="university-card" data-name="جامعة نزوى">
+                <a href="/omanlogin/nizwa.html" class="university-link">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9qQS-RwcsrOmqdHnlRra2sGDStup4cNSKkw&s" alt="شعار جامعة نزوى" class="university-logo">
+                    <div class="university-name">جامعة نزوى</div>
+                </a>
+            </div>
+            
+            <!-- الجامعة الوطنية للعلوم والتكنولوجيا -->
+            <div class="university-card" data-name="الجامعة الوطنية للعلوم والتكنولوجيا">
+                <a href="/omanlogin/nationalsiance.html" class="university-link">
+                    <img src="data:image/png;base64,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" alt="شعار الجامعة الوطنية للعلوم والتكنولوجيا" class="university-logo">
+                    <div class="university-name">الجامعة الوطنية للعلوم والتكنولوجيا</div>
+                </a>
+            </div>
+            
+            <!-- جامعة مسقط -->
+            <div class="university-card" data-name="جامعة مسقط">
+                <a href="/omanlogin/masqatuni.html" class="university-link">
+                    <img src="data:image/png;base64,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" alt="شعار جامعة مسقط" class="university-logo">
+                    <div class="university-name">جامعة مسقط</div>
+                </a>
+            </div>
+            
+            <!-- جامعة عُمان الطبية -->
+            <div class="university-card" data-name="جامعة عُمان الطبية">
+                <a href="/omanlogin/midicalomanuni.html" class="university-link">
+                    <img src="data:image/jpeg;base64,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" alt="شعار جامعة عُمان الطبية" class="university-logo">
+                    <div class="university-name">جامعة عُمان الطبية</div>
+                </a>
+            </div>
+            
+            <!-- جامعة الشرقية -->
+            <div class="university-card" data-name="جامعة الشرقية">
+                <a href="/omanlogin/eastuni.html" class="university-link">
+                    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxQQEBIREREQFhUWEg8YERYTEBIREhUSFhcWGBcSExUYHSggGBsmJxgZIjEiJSktMS4uFx8/ODMvNygtLisBCgoKDg0OGxAQGislHyYtLS0tLS0tLS0tLS8vLS0tLy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAOEA4QMBEQACEQEDEQH/xAAbAAEAAQUBAAAAAAAAAAAAAAAABAECAwUGB//EAD8QAAICAQIEAwQIAwUJAQAAAAECAAMRBBIFBiExE0FRIjJhcQcUI1KBkaGxQmLRM1OCkvAWFyRDY2R0ouIV/8QAGgEBAAMBAQEAAAAAAAAAAAAAAAECAwQFBv/EACoRAQACAgEDAwMEAwEAAAAAAAABAgMREgQhMRNBUQUiYUJxgaEUIzLR/9oADAMBAAIRAxEAPwD3GAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBZbaEBZiAB3JIAA+JMR38DSnmygkinxryO/gVNYo+G/ov6zWcVo727furFtzqFV5hPc6LXAevh1MPySwn9JWKRPi0JmZjzEpOh4/Rc2xbMP/d2K1Vn+RwCfwicdo9iLQ2QMolWAgICAgICAgICAgICAgICAgICAgICAgarmLjlehpa20n0RR7zt5Kv9fKaYsVsluMK2tpz+i4NdrR9Z143dC2n0m7bSvmvij+Jj8e36C+XL6VZri1v5RWsXmOXhK4bXqLj4V9CLR5rtFYXHYJtPWeLjt1OW8xlj7XqZY6fFWJxW+5vtPpq9OmxcICcD2u7HoOp7mehixVxxqkdnBkyWvPK3lzetrFbJpuIAXU2Nt0+oYAWJZ/DXawxtb7rjGfPrOuvf7qdp94Yzr3XNr7eGWImodrdI7Ba7262UMeyXH+JfRu/rEVjLG69rfH/hua+XXBgeonO0VgICAgICAgICAgICAgICAgICAgICBQyB5vo3/wD1eMMzdaNLnYv8JYHAJ+bA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" alt="شعار جامعة الشرقية" class="university-logo">
+                    <div class="university-name">جامعة الشرقية</div>
+                </a>
+            </div>
+          
+            
+            <!-- الجامعة العربية المفتوحة -->
+            <div class="university-card" data-name="الجامعة العربية المفتوحة">
+                <a href="/omanlogin/arabobenuni.html" class="university-link">
+                    <img src="data:image/png;base64,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" alt="شعار الجامعة العربية المفتوحة" class="university-logo">
+                    <div class="university-name">الجامعة العربية المفتوحة</div>
+                </a>
+            </div>
+            
+          
+        </div>
+    </div>
+
+    <!-- إشعارات الصوت -->
+    <div class="voice-feedback" id="voiceFeedback"></div>
+
+    <script>
+        // النظام الصوتي المتطور
+        const synth = window.speechSynthesis;
+        let currentLang = 'ar';
+        let voiceControlActive = false;
+        let recognition;
+        let isFirstLoad = true;
+        let isDictating = false;
+        let currentDictationField = null;
+        let isBrailleMode = false;
+        let isVibrationActive = false;
+
+        // قاعدة بيانات الأوامر والردود
+        const voiceCommands = {
+            // أوامر الجامعات
+            'فتح جامعة السلطان قابوس': {
+                action: () => window.location.href = '/omanlogin/qabosuni.html',
+                feedback: 'جاري فتح صفحة جامعة السلطان قابوس',
+                vibration: true
+            },
+            'فتح جامعة التقنية والعلوم التطبيقية': {
+                action: () => window.location.href = '/omanlogin/teqaniuni.html',
+                feedback: 'جاري فتح صفحة جامعة التقنية والعلوم التطبيقية',
+                vibration: true
+            },
+            'فتح جامعة البريمي': {
+                action: () => window.location.href = '/omanlogin/bramiuni.html',
+                feedback: 'جاري فتح صفحة جامعة البريمي',
+                vibration: true
+            },
+            'فتح جامعة ظفار': {
+                action: () => window.location.href = '/omanlogin/thafaruni.html',
+                feedback: 'جاري فتح صفحة جامعة ظفار',
+                vibration: true
+            },
+            'فتح الجامعة الألمانية للتكنولوجيا': {
+                action: () => window.location.href = '/omanlogin/germanuni.html',
+                feedback: 'جاري فتح صفحة الجامعة الألمانية للتكنولوجيا',
+                vibration: true
+            },
+            'فتح جامعة صحار': {
+                action: () => window.location.href = '/omanlogin/sahaaruni.html',
+                feedback: 'جاري فتح صفحة جامعة صحار',
+                vibration: true
+            },
+            'فتح جامعة نزوى': {
+                action: () => window.location.href = '/omanlogin/nizwa.html',
+                feedback: 'جاري فتح صفحة جامعة نزوى',
+                vibration: true
+            },
+            'فتح الجامعة الوطنية للعلوم والتكنولوجيا': {
+                action: () => window.location.href = '/omanlogin/nationalsiance.html',
+                feedback: 'جاري فتح صفحة الجامعة الوطنية للعلوم والتكنولوجيا',
+                vibration: true
+            },
+            'فتح جامعة مسقط': {
+                action: () => window.location.href = '/omanlogin/masqatuni.html',
+                feedback: 'جاري فتح صفحة جامعة مسقط',
+                vibration: true
+            },
+            'فتح جامعة عمان الطبية': {
+                action: () => window.location.href = '/omanlogin/midicalomanuni.html',
+                feedback: 'جاري فتح صفحة جامعة عمان الطبية',
+                vibration: true
+            },
+            'فتح جامعة الشرقية': {
+                action: () => window.location.href = '/omanlogin/eastuni.html',
+                feedback: 'جاري فتح صفحة جامعة الشرقية',
+                vibration: true
+            },
+           
+            'فتح الجامعة العربية المفتوحة': {
+                action: () => window.location.href = '/omanlogin/arabobenuni.html',
+                feedback: 'جاري فتح صفحة الجامعة العربية المفتوحة',
+                vibration: true
+            },
+            'فتح جامعة مسندم الخاصة': {
+                action: () => window.location.href = '/omanlogin/aou.html',
+                feedback: 'جاري فتح صفحة جامعة مسندم الخاصة',
+                vibration: true
+            },
+            
+            // الأوامر الأساسية
+            'اقرأ الصفحة': {
+                action: () => readPageContent(),
+                feedback: 'جاري قراءة محتوى الصفحة',
+                vibration: false
+            },
+            'اقرأ لي الصفحة': {
+                action: () => readPageContent(),
+                feedback: 'جاري قراءة محتوى الصفحة',
+                vibration: false
+            },
+            'تكبير النص': {
+                action: () => {
+                    const slider = document.getElementById('sizeSlider');
+                    const newValue = Math.min(parseFloat(slider.value) + 0.2, 3);
+                    slider.value = newValue;
+                    adjustSize(newValue);
+                },
+                feedback: 'تم تكبير النص',
+                vibration: true
+            },
+            'تصغير النص': {
+                action: () => {
+                    const slider = document.getElementById('sizeSlider');
+                    const newValue = Math.max(parseFloat(slider.value) - 0.2, 0.8);
+                    slider.value = newValue;
+                    adjustSize(newValue);
+                },
+                feedback: 'تم تصغير النص',
+                vibration: true
+            },
+            'إيقاف التحكم الصوتي': {
+                action: () => stopVoiceControl(),
+                feedback: 'تم إيقاف التحكم الصوتي',
+                vibration: true
+            },
+            
+            // أوامر الثيمات
+            'ثيم البروتانوبيا': {
+                action: () => changeTheme('protanopia'),
+                feedback: 'تم تفعيل ثيم البروتانوبيا لعمى الأحمر',
+                vibration: true
+            },
+            'ثيم الديوتيرانوبيا': {
+                action: () => changeTheme('deuteranopia'),
+                feedback: 'تم تفعيل ثيم الديوتيرانوبيا لعمى الأخضر',
+                vibration: true
+            },
+            'ثيم التريتانوبيا': {
+                action: () => changeTheme('tritanopia'),
+                feedback: 'تم تفعيل ثيم التريتانوبيا لعمى الأزرق',
+                vibration: true
+            },
+            'ثيم عمى الألوان الكلي': {
+                action: () => changeTheme('achromatopsia'),
+                feedback: 'تم تفعيل ثيم عمى الألوان الكلي',
+                vibration: true
+            },
+            'ثيم التباين العالي': {
+                action: () => changeTheme('high-contrast'),
+                feedback: 'تم تفعيل ثيم التباين العالي',
+                vibration: true
+            },
+            'الثيم الافتراضي': {
+                action: () => changeTheme('default'),
+                feedback: 'تم تفعيل الثيم الافتراضي',
+                vibration: true
+            },
+            
+            // أوامر أنظمة المكفوفين
+            'تفعيل برايل': {
+                action: () => toggleBrailleMode(true),
+                feedback: 'تم تفعيل نظام برايل للمكفوفين',
+                vibration: true
+            },
+            'إيقاف برايل': {
+                action: () => toggleBrailleMode(false),
+                feedback: 'تم إيقاف نظام برايل',
+                vibration: true
+            },
+            'تفعيل الاهتزاز': {
+                action: () => activateVibration(),
+                feedback: 'تم تفعيل نظام الاهتزاز',
+                vibration: true
+            },
+            'إيقاف الاهتزاز': {
+                action: () => deactivateVibration(),
+                feedback: 'تم إيقاف نظام الاهتزاز',
+                vibration: true
+            },
+            
+            // الأوامر الإنجليزية
+            'open squ': {
+                action: () => window.location.href = 'Uni.html?uni=squ',
+                feedback: 'Opening Sultan Qaboos University page',
+                vibration: true
+            },
+            'open ut': {
+                action: () => window.location.href = 'Uni.html?uni=ut',
+                feedback: 'Opening University of Technology page',
+                vibration: true
+            },
+            'search': {
+                action: () => document.getElementById('searchInput').focus(),
+                feedback: 'Ready for search input',
+                vibration: true
+            }
+        };
+
+        // تهيئة النظام عند تحميل الصفحة
+        window.onload = function() {
+            // تفعيل البحث السريع
+            setupSearch();
+            
+            // تفعيل التحكم الصوتي تلقائياً
+            setTimeout(() => {
+                startVoiceControl();
+                
+                // رسالة ترحيب صوتية
+                speak("مرحبًا بك في صفحة جامعات سلطنة عمان. التحكم الصوتي مفعل الآن. يمكنك إعطاء الأوامر الصوتية مثل: افتح جامعة السلطان قابوس، افتح جامعة التقنية والعلوم التطبيقية، أو اقرأ الصفحة.");
+                
+                // تحديث واجهة المستخدم
+                document.getElementById('voiceControlBtn').classList.add('active');
+                
+                // تمييز أن هذه ليست المرة الأولى
+                isFirstLoad = false;
+            }, 1500);
+            
+            // جعل العناصر قابلة للوصول بواسطة Tab
+            document.querySelectorAll('[tabindex="0"]').forEach(el => {
+                el.addEventListener('focus', function() {
+                    speakElement(this);
+                });
+            });
+            
+            // إضافة مستمع لأحداث لوحة المفاتيح
+            document.addEventListener('keydown', handleKeyEvents);
+        };
+
+        // إعداد نظام البحث
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const universities = document.querySelectorAll('.university-card');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.trim().toLowerCase();
+                
+                universities.forEach(university => {
+                    const name = university.getAttribute('data-name').toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        university.style.display = 'block';
+                    } else {
+                        university.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // تبديل لوحة التحكم
+        function toggleControlPanel(open = null) {
+            const panel = document.getElementById('controlPanel');
+            const shouldOpen = open !== null ? open : !panel.classList.contains('panel-collapsed');
+            
+            panel.classList.toggle('panel-collapsed', !shouldOpen);
+            
+            if (!isFirstLoad) {
+                speak(shouldOpen ? 'تم فتح لوحة التحكم' : 'تم إغلاق لوحة التحكم');
+                if (shouldOpen) vibrate(100);
+            }
+        }
+
+        // قراءة محتوى الصفحة كاملاً
+        function readPageContent() {
+            const universities = Array.from(document.querySelectorAll('.university-name')).map(el => el.textContent).join('، ');
+            const pageContent = [
+                "صفحة جامعات سلطنة عمان",
+                "تحتوي هذه الصفحة على قائمة بجامعات سلطنة عمان",
+                "الجامعات المتاحة هي: " + universities,
+                "للانتقال إلى صفحة جامعة معينة، يمكنك النقر على اسمها أو استخدام الأمر الصوتي مثل: افتح جامعة السلطان قابوس"
+            ].join(". ");
+            
+            speak(pageContent);
+        }
+
+        // قراءة العناصر
+        function speakElement(element) {
+            let text = element.getAttribute('aria-label') || element.textContent || element.value || element.placeholder;
+            if (!text) return;
+            
+            speak(text);
+            
+            // إضافة اهتزاز عند التركيز إذا كان النظام مفعلاً
+            if (isVibrationActive) {
+                vibrate(100);
+            }
+        }
+
+        // وظيفة القراءة العامة
+        function speak(text, lang = currentLang) {
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            
+            // البحث عن صوت مناسب للغة المختارة
+            const voices = synth.getVoices();
+            const preferredVoice = voices.find(voice => 
+                lang === 'ar' ? voice.lang.includes('ar') : voice.lang.includes('en'));
+            
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+            
+            synth.speak(utterance);
+            
+            // عرض إشعار مرئي للصوت
+            showVoiceFeedback(text);
+        }
+
+        // عرض إشعار الصوت
+        function showVoiceFeedback(text) {
+            const feedbackEl = document.getElementById('voiceFeedback');
+            feedbackEl.textContent = text;
+            feedbackEl.style.opacity = '1';
+            
+            setTimeout(() => {
+                feedbackEl.style.opacity = '0';
+            }, 3000);
+        }
+
+        // التحكم الصوتي
+        function startVoiceControl() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                speak("المتصفح لا يدعم التعرف على الصوت. يرجى استخدام متصفح حديث مثل جوجل كروم.");
+                return;
+            }
+            
+            voiceControlActive = true;
+            showVoiceIndicator(true);
+            
+            // إنشاء مثيل التعرف على الصوت
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = currentLang;
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+                processVoiceCommand(transcript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Voice recognition error', event.error);
+                speak("حدث خطأ في التعرف على الصوت. يرجى المحاولة مرة أخرى.");
+            };
+            
+            recognition.onend = function() {
+                if (voiceControlActive) {
+                    recognition.start();
+                }
+            };
+            
+            recognition.start();
+            
+            // تحديث واجهة المستخدم
+            updateVoiceControlUI();
+            
+            // إضافة اهتزاز عند التفعيل
+            if (isVibrationActive) {
+                vibrate(200);
+            }
+        }
+
+        function stopVoiceControl() {
+            if (recognition) {
+                recognition.stop();
+            }
+            voiceControlActive = false;
+            showVoiceIndicator(false);
+            
+            // تحديث واجهة المستخدم
+            updateVoiceControlUI();
+            
+            speak("تم إيقاف التحكم الصوتي.");
+        }
+
+        function toggleVoiceControl() {
+            if (voiceControlActive) {
+                stopVoiceControl();
+            } else {
+                startVoiceControl();
+            }
+        }
+
+        function showVoiceIndicator(show) {
+            const indicator = document.getElementById('voiceIndicator');
+            indicator.style.display = show ? 'flex' : 'none';
+        }
+
+        function updateVoiceControlUI() {
+            const voiceBtn = document.getElementById('voiceControlBtn');
+            
+            if (voiceControlActive) {
+                voiceBtn.classList.add('active');
+            } else {
+                voiceBtn.classList.remove('active');
+            }
+        }
+
+        // تبديل وضع برايل
+        function toggleBrailleMode(enable = null) {
+            const body = document.body;
+            const shouldEnable = enable !== null ? enable : !isBrailleMode;
+            
+            if (shouldEnable) {
+                body.classList.add('braille-mode');
+                speak("تم تفعيل نظام برايل للمكفوفين. تم تكبير النصوص وإضافة رموز برايل للعناصر.");
+            } else {
+                body.classList.remove('braille-mode');
+                speak("تم إيقاف نظام برايل.");
+            }
+            
+            isBrailleMode = shouldEnable;
+            
+            // تحديث واجهة المستخدم
+            const brailleBtn = document.getElementById('brailleBtn');
+            if (isBrailleMode) {
+                brailleBtn.classList.add('active');
+            } else {
+                brailleBtn.classList.remove('active');
+            }
+            
+            // إضافة اهتزاز عند التغيير
+            if (isVibrationActive) {
+                vibrate(150);
+            }
+        }
+
+        // تفعيل نظام الاهتزاز
+        function activateVibration() {
+            if (!navigator.vibrate) {
+                speak("هذا الجهاز لا يدعم نظام الاهتزاز.");
+                return;
+            }
+            
+            isVibrationActive = true;
+            const vibrationAlert = document.getElementById('vibrationAlert');
+            vibrationAlert.style.display = 'flex';
+            
+            // اهتزاز تأكيدي
+            vibrate(300);
+            
+            speak("تم تفعيل نظام الاهتزاز. سوف يهتز الجهاز عند التفاعل مع العناصر.");
+        }
+
+        function deactivateVibration() {
+            isVibrationActive = false;
+            const vibrationAlert = document.getElementById('vibrationAlert');
+            vibrationAlert.style.display = 'none';
+            
+            speak("تم إيقاف نظام الاهتزاز.");
+        }
+
+        // وظيفة الاهتزاز
+        function vibrate(duration) {
+            if (isVibrationActive && navigator.vibrate) {
+                navigator.vibrate(duration);
+            }
+        }
+
+        function processVoiceCommand(command) {
+            for (const [key, data] of Object.entries(voiceCommands)) {
+                if (command.includes(key)) {
+                    showVoiceFeedback(`تم تنفيذ: ${key}`);
+                    data.action();
+                    speak(data.feedback);
+                    if (data.vibration) vibrate(100);
+                    return;
+                }
+            }
+            
+            // إذا لم يتم التعرف على الأمر
+            handleUnknownCommand(command);
+        }
+
+        function handleUnknownCommand(command) {
+            const similarCommands = findSimilarCommands(command);
+            
+            if (similarCommands.length > 0) {
+                const feedback = `لم يتم التعرف على الأمر: ${command}. ربما تقصد: ${similarCommands.join('، ')}`;
+                speak(feedback);
+            } else {
+                const availableCommands = Object.keys(voiceCommands)
+                    .filter(cmd => cmd.length > 3)
+                    .join('، ');
+                
+                speak(`لم يتم التعرف على الأمر. الأوامر المتاحة هي: ${availableCommands}`);
+            }
+            
+            // اهتزاز عند الخطأ
+            if (isVibrationActive) {
+                vibrate([100, 50, 100]);
+            }
+        }
+
+        function findSimilarCommands(command) {
+            const commands = Object.keys(voiceCommands)
+                .filter(cmd => cmd.length > 3);
+            
+            return commands.filter(cmd => {
+                const similarity = calculateSimilarity(command, cmd);
+                return similarity > 0.6;
+            }).slice(0, 3);
+        }
+
+        function calculateSimilarity(s1, s2) {
+            let longer = s1;
+            let shorter = s2;
+            if (s1.length < s2.length) {
+                longer = s2;
+                shorter = s1;
+            }
+            const longerLength = longer.length;
+            if (longerLength === 0) return 1.0;
+            
+            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+        }
+
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase();
+            s2 = s2.toLowerCase();
+            
+            const costs = [];
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i === 0) {
+                        costs[j] = j;
+                    } else {
+                        if (j > 0) {
+                            let newValue = costs[j - 1];
+                            if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                            }
+                            costs[j - 1] = lastValue;
+                            lastValue = newValue;
+                        }
+                    }
+                }
+                if (i > 0) costs[s2.length] = lastValue;
+            }
+            return costs[s2.length];
+        }
+
+        // تبديل الثيمات
+        function changeTheme(theme) {
+            if (theme === 'default') {
+                document.body.removeAttribute('data-theme');
+            } else {
+                document.body.setAttribute('data-theme', theme);
+            }
+            
+            const themeName = getThemeName(theme);
+            speak(themeName);
+            
+            // تحديث الأزرار النشطة
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (theme !== 'default') {
+                const activeBtn = document.querySelector(`.control-btn[onclick="changeTheme('${theme}')"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+            
+            // اهتزاز عند تغيير الثيم
+            if (isVibrationActive) {
+                vibrate(150);
+            }
+        }
+
+        function getThemeName(theme) {
+            const themeNames = {
+                'protanopia': 'ثيم البروتانوبيا لعمى الأحمر',
+                'deuteranopia': 'ثيم الديوتيرانوبيا لعمى الأخضر',
+                'tritanopia': 'ثيم التريتانوبيا لعمى الأزرق',
+                'achromatopsia': 'ثيم عمى الألوان الكلي',
+                'high-contrast': 'ثيم التباين العالي',
+                'default': 'الثيم الافتراضي'
+            };
+            
+            return themeNames[theme] || 'تم تغيير الثيم';
+        }
+
+        // نظام تكبير النصوص والعناصر
+        function adjustSize(value) {
+            const sizeLabels = {
+                '0.8': 'صغير جدًا',
+                '1': 'عادي',
+                '1.2': 'كبير',
+                '1.4': 'كبير جدًا',
+                '1.6': 'ضخم',
+                '1.8': 'ضخم جدًا',
+                '2': 'عملاق',
+                '3': 'كبير جدًا جدًا'
+            };
+            
+            document.documentElement.style.setProperty('--text-size', `${value * 16}px`);
+            document.documentElement.style.setProperty('--icon-scale', value);
+            
+            // تحديث التسمية
+            const sizeLabel = document.getElementById('sizeLabel');
+            sizeLabel.textContent = sizeLabels[value] || sizeLabels['1'];
+            
+            // قراءة التغيير صوتيًا
+            if (value !== '1') {
+                speak(`حجم النص الآن ${sizeLabels[value] || sizeLabels['1']}`);
+            }
+            
+            // اهتزاز عند التغيير
+            if (isVibrationActive) {
+                vibrate(100);
+            }
+        }
+
+        // معالجة أحداث لوحة المفاتيح
+        function handleKeyEvents(e) {
+            // اختصارات لوحة المفاتيح
+            if (e.altKey) {
+                switch(e.key) {
+                    case '1': changeTheme('protanopia'); break;
+                    case '2': changeTheme('deuteranopia'); break;
+                    case '3': changeTheme('tritanopia'); break;
+                    case '4': changeTheme('achromatopsia'); break;
+                    case '5': changeTheme('high-contrast'); break;
+                    case '0': changeTheme('default'); break;
+                    case 'v': toggleVoiceControl(); break;
+                    case 'r': readPageContent(); break;
+                    case 'b': toggleBrailleMode(); break;
+                    case 'h': activateVibration(); break;
+                    case 'p': toggleControlPanel(); break;
+                }
+            }
+        }
+
+        // تهيئة الأصوات عند توفرها
+        window.speechSynthesis.onvoiceschanged = function() {
+            const voices = window.speechSynthesis.getVoices();
+            console.log('الأصوات المتاحة:', voices);
+        };
+    </script>
+    <script>
+        // تهيئة النظام عند تحميل الصفحة
+        window.onload = function() {
+            // تفعيل البحث السريع
+            setupSearch();
+            
+            // جعل العناصر قابلة للوصول بواسطة Tab
+            document.querySelectorAll('[tabindex="0"]').forEach(el => {
+                el.addEventListener('focus', function() {
+                    // يمكنك إضافة تفاعل مع Narrator هنا إذا لزم الأمر
+                });
+            });
+        };
+
+        // إعداد نظام البحث
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const universities = document.querySelectorAll('.university-card');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.trim().toLowerCase();
+                
+                universities.forEach(university => {
+                    const name = university.getAttribute('data-name').toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        university.style.display = 'block';
+                    } else {
+                        university.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // تبديل لوحة التحكم
+        function toggleControlPanel(open = null) {
+            const panel = document.getElementById('controlPanel');
+            const shouldOpen = open !== null ? open : !panel.classList.contains('panel-collapsed');
+            
+            panel.classList.toggle('panel-collapsed', !shouldOpen);
+        }
+
+        // تبديل الثيمات
+        function changeTheme(theme) {
+            if (theme === 'default') {
+                document.body.removeAttribute('data-theme');
+            } else {
+                document.body.setAttribute('data-theme', theme);
+            }
+            
+            // تحديث الأزرار النشطة
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (theme !== 'default') {
+                const activeBtn = document.querySelector(`.control-btn[onclick="changeTheme('${theme}')"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+        }
+
+        // نظام تكبير النصوص والعناصر
+        function adjustSize(value) {
+            const sizeLabels = {
+                '0.8': 'صغير جدًا',
+                '1': 'عادي',
+                '1.2': 'كبير',
+                '1.4': 'كبير جدًا',
+                '1.6': 'ضخم',
+                '1.8': 'ضخم جدًا',
+                '2': 'عملاق',
+                '3': 'كبير جدًا جدًا'
+            };
+            
+            document.documentElement.style.setProperty('--text-size', `${value * 16}px`);
+            document.documentElement.style.setProperty('--icon-scale', value);
+            
+            // تحديث التسمية
+            const sizeLabel = document.getElementById('sizeLabel');
+            sizeLabel.textContent = sizeLabels[value] || sizeLabels['1'];
+        }
+    </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const universityLinks = document.querySelectorAll('.university-link');
+
+        universityLinks.forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+
+                const universityName = link.querySelector('.university-name').textContent.trim();
+
+                // You can still save this to localStorage if you want to display it on the main page.
+                localStorage.setItem('selectedUniversity', universityName);
+
+                // Now, send the user directly to the main content page.
+                window.location.href = '/main.html';
+            });
+        });
+    });
+</script>
+</body>
+</html>

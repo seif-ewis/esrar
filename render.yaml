@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: educational-cms-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BYTESCALE_API_KEY
+        sync: false
+      - key: BYTESCALE_ACCOUNT_ID
+        sync: false

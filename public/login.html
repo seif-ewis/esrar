@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الدخول الشامل للمكفوفين - جائزة التميز العالمي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --text-color: #333333;
+            --light-text: #7f8c8d;
+            --background-color: #ffffff;
+            --input-bg: #f9f9f9;
+            --input-border: #e0e0e0;
+            --focus-border: #3498db;
+            --button-hover: #2980b9;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --text-size: 16px;
+            --icon-scale: 1;
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --panel-width: 300px;
+            --braille-size: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.8;
+            transition: var(--transition);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* تصميم جديد للوحة التحكم */
+        .control-panel {
+            width: var(--panel-width);
+            background: linear-gradient(145deg, #2c3e50 0%, #1a2635 100%);
+            color: white;
+            padding: 30px 20px;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            z-index: 1000;
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+            transform: translateX(0);
+            transition: transform 0.4s ease-in-out;
+            overflow-y: auto;
+            border-top-left-radius: 25px;
+            border-bottom-left-radius: 25px;
+        }
+
+        .panel-collapsed {
+            transform: translateX(calc(var(--panel-width) - 70px));
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #3498db, #e74c3c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .toggle-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            backdrop-filter: blur(5px);
+        }
+
+        .toggle-panel:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(180deg);
+        }
+
+        .control-group {
+            margin-bottom: 30px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            position: relative;
+            padding-right: 15px;
+        }
+
+        .control-label::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: var(--accent-color);
+            border-radius: 50%;
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            text-align: right;
+            backdrop-filter: blur(5px);
+            border-left: 3px solid transparent;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-5px);
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(90deg, rgba(231, 76, 60, 0.3) 0%, rgba(231, 76, 60, 0.7) 100%);
+            border-left: 3px solid white;
+        }
+
+        .control-btn i {
+            font-size: 1.2rem;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .slider-container {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .slider {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+            border: 3px solid white;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--button-hover);
+        }
+
+        /* تصميم جديد لمنطقة المحتوى الرئيسية */
+        .main-content {
+            margin-right: var(--panel-width);
+            transition: margin 0.4s ease-in-out;
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f5f7fa;
+            background-image: radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
+                            radial-gradient(circle at 90% 80%, rgba(231, 76, 60, 0.05) 0%, transparent 20%);
+        }
+
+        .panel-collapsed ~ .main-content {
+            margin-right: 70px;
+        }
+
+        /* تصميم جديد لصندوق الدخول */
+        .login-container {
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            transform: scale(var(--icon-scale));
+            transform-origin: center;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, var(--secondary-color), var(--accent-color));
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .logo {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            transition: var(--transition);
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            font-size: calc(var(--text-size) * 1.8);
+            font-weight: 800;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .login-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 50%;
+            transform: translateX(50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(to right, var(--secondary-color), var(--accent-color));
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: calc(var(--text-size) * 1.1);
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            font-size: var(--text-size);
+            transition: var(--transition);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--focus-border);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1), inset 0 2px 5px rgba(0, 0, 0, 0.03);
+            background: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--button-hover) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: calc(var(--text-size) * 1.1);
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover, .submit-btn:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .submit-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .submit-btn:hover::after {
+            opacity: 1;
+        }
+        
+        /* --- MODIFIED: Added style for error messages --- */
+        .error-message {
+            color: var(--accent-color);
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+            min-height: 20px; /* Reserve space to prevent layout shift */
+        }
+
+          /* أنظمة الثيمات لعمى الألوان */
+         [data-theme="protanopia"] {
+          --primary-color: #3a7ca5;        
+          --secondary-color: #f0a202;      
+         --button-hover: #d18b00;         
+          --accent-color: #00a6a6;         
+          --text-color: #1a1a1a;          
+          --background-color: #f3f3f3;    
+         --input-bg: #ffffff;            
+          --input-border: #3a7ca5;         
+}
+
+[data-theme="deuteranopia"] {
+        --primary-color: #057dc2;      
+        --secondary-color:  #057dc2;    
+        --button-hover: #005f99;      
+        --accent-color: #56B4E9;     
+         --text-color: #111111;        
+         --background-color: #F0F0F0;   
+         --input-bg: #FFFFFF;          
+          --input-border: #0072B2;       
+}
+
+
+ 
+[data-theme="tritanopia"] {
+          --primary-color: #880000;     
+        --secondary-color: #136621;   
+        --button-hover: #b30000;      
+        --accent-color: #9b009b;      
+         --text-color: #111111;        
+       --background-color: #f7f7f7;  
+        --input-bg: #ffffff;          
+      --input-border: #003f88;      
+}
+
+        [data-theme="achromatopsia"] {
+            --primary-color: #555555;
+            --secondary-color: #888888;
+            --button-hover: #777777;
+            --accent-color: #222222;
+            --text-color: #333;
+            --background-color: #f5f5f5;
+            --input-bg: #e8e8e8;
+            --input-border: #d0d0d0;
+        }
+
+        [data-theme="high-contrast"] {
+            --primary-color: #000000;
+            --secondary-color: #0e0e0e;
+            --button-hover: #cccccc;
+            --accent-color: #ff0000;
+            --text-color: #3d3d3d;
+            --background-color: #000000;
+            --input-bg: #0a0909;
+            --input-border: #ffffff;
+        }
+       
+
+        /* تحسينات للجوال */
+        @media (max-width: 992px) {
+            .control-panel {
+                transform: translateX(calc(var(--panel-width) - 70px));
+            }
+            
+            .panel-collapsed {
+                transform: translateX(calc(var(--panel-width) - 40px));
+            }
+            
+            .main-content {
+                margin-right: 70px;
+                padding: 20px;
+            }
+            
+            .login-container {
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .control-panel {
+                width: 280px;
+            }
+            
+            .main-content {
+                margin-right: 0;
+                padding: 20px 15px;
+            }
+            
+            .login-container {
+                padding: 25px 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            :root {
+                --panel-width: 260px;
+            }
+            
+            .login-container {
+                padding: 20px 15px;
+            }
+            
+            .login-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* تحسينات للواجهة المظلمة */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --text-color: #f0f0f0;
+                --background-color: #121212;
+                --input-bg: #1e1e1e;
+                --input-border: #333;
+                --light-text: #aaa;
+            }
+            
+            .login-container:not([data-theme]) {
+                background: #1e1e1e;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                border: 1px solid #333;
+            }
+            
+            .control-panel:not([data-theme]) {
+                background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+            }
+            
+            .main-content:not([data-theme]) {
+                background-color: #121212;
+                background-image: radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
+                                radial-gradient(circle at 90% 80%, rgba(231, 76, 60, 0.05) 0%, transparent 20%);
+            }
+        }
+
+        /* تحسينات الوصول الشامل */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        [aria-live="polite"] {
+            position: absolute;
+            left: -10000px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel" id="controlPanel">
+        <div class="panel-header">
+            <div class="panel-title">نظام الوصول الشامل</div>
+            <button class="toggle-panel" onclick="toggleControlPanel()" aria-label="تبديل لوحة التحكم">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12h18M3 6h18M3 18h18"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">الثيمات البصرية</div>
+            <button class="control-btn" onclick="changeTheme('default')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                الوضع الافتراضي
+            </button>
+            <button class="control-btn" onclick="changeTheme('protanopia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="red"></circle>
+                    <path d="M12 16a4 4 0 0 0 0-8" stroke="blue"></path>
+                </svg>
+                عمى الأحمر (بروتانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('deuteranopia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="green"></circle>
+                    <path d="M12 8a4 4 0 0 1 0 8" stroke="red"></path>
+                </svg>
+                عمى الأخضر (ديوتيرانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('tritanopia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="blue"></circle>
+                    <path d="M12 16a4 4 0 0 1 0-8" stroke="yellow"></path>
+                </svg>
+                عمى الأزرق (تريتانوبيا)
+            </button>
+            <button class="control-btn" onclick="changeTheme('achromatopsia')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                </svg>
+                عمى الألوان الكلي
+            </button>
+            <button class="control-btn" onclick="changeTheme('high-contrast')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke="black" fill="white"></circle>
+                    <circle cx="12" cy="12" r="6" stroke="black" fill="black"></circle>
+                </svg>
+                تباين عالي
+            </button>
+        </div>
+        
+      
+        
+        <div class="control-group">
+            <div class="control-label">تكبير النصوص</div>
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>حجم النص:</span>
+                    <span id="sizeLabel">عادي</span>
+                </div>
+                <input type="range" min="0.8" max="3" step="0.2" value="1" class="slider" id="sizeSlider" 
+                       aria-label="متحكم بحجم النص والعناصر" oninput="adjustSize(this.value)">
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="login-container">
+            <div class="logo-container">
+                <img src="/img/esrarcom.jpg" alt="شعار النظام - إصرار" class="logo zoomable" tabindex="0">
+            </div>
+            
+            <h1 class="login-title zoomable" tabindex="0">تسجيل الدخول</h1>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email" class="form-label zoomable" tabindex="0">البريد الإلكتروني</label>
+                    <input type="email" id="email" class="form-input zoomable" 
+                           placeholder="أدخل بريدك الإلكتروني" aria-label="حقل إدخال البريد الإلكتروني"
+                           required tabindex="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label zoomable" tabindex="0">كلمة المرور</label>
+                    <input type="password" id="password" class="form-input zoomable" 
+                           placeholder="أدخل كلمة المرور" aria-label="حقل إدخال كلمة المرور"
+                           required tabindex="0">
+                </div>
+                
+                <p id="errorMessage" class="error-message"></p>
+                <button type="submit" class="submit-btn zoomable" 
+                        aria-label="زر تسجيل الدخول، اضغط لإدخال النظام">
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="narratorAnnouncements" aria-live="polite" class="sr-only"></div>
+
+    <script>
+        let isBrailleMode = false;
+        let currentSpeech = null;
+        let narratorActive = false;
+
+        // تهيئة النظام عند تحميل الصفحة
+        window.onload = function() {
+            // تهيئة نظام Narrator
+            initNarrator();
+            
+            // جعل العناصر قابلة للوصول بواسطة Tab
+            document.querySelectorAll('[tabindex="0"]').forEach(el => {
+                el.addEventListener('focus', function() {
+                    if (narratorActive) {
+                        readElement(this);
+                    }
+                });
+            });
+            
+            // إضافة مستمع للنموذج
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleLogin();
+            });
+        };
+
+        // تهيئة نظام Narrator
+        function initNarrator() {
+            // يمكن تفعيل النظام تلقائياً أو من خلال ساعة الأردوينو
+            narratorActive = true;
+            
+            // قراءة عنوان الصفحة عند التحميل
+            setTimeout(() => {
+                announce('نظام الدخول الشامل للمكفوفين جاهز للاستخدام');
+            }, 1000);
+        }
+
+        // تبديل لوحة التحكم
+        function toggleControlPanel(open = null) {
+            const panel = document.getElementById('controlPanel');
+            const shouldOpen = open !== null ? open : !panel.classList.contains('panel-collapsed');
+            
+            panel.classList.toggle('panel-collapsed', !shouldOpen);
+            
+            if (narratorActive) {
+                const state = panel.classList.contains('panel-collapsed') ? 'مغلقة' : 'مفتوحة';
+                announce(`لوحة التحكم ${state}`);
+            }
+        }
+
+        // تبديل الثيمات
+        function changeTheme(theme) {
+            if (theme === 'default') {
+                document.body.removeAttribute('data-theme');
+            } else {
+                document.body.setAttribute('data-theme', theme);
+            }
+            
+            // تحديث الأزرار النشطة
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (theme !== 'default') {
+                const activeBtn = document.querySelector(`.control-btn[onclick="changeTheme('${theme}')"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+            
+            // إعلان تغيير الثيم
+            if (narratorActive) {
+                const themeNames = {
+                    'default': 'الوضع الافتراضي',
+                    'protanopia': 'وضع عمى الأحمر',
+                    'deuteranopia': 'وضع عمى الأخضر',
+                    'tritanopia': 'وضع عمى الأزرق',
+                    'achromatopsia': 'وضع عمى الألوان الكلي',
+                    'high-contrast': 'وضع التباين العالي'
+                };
+                announce(`تم تغيير الثيم إلى ${themeNames[theme]}`);
+            }
+        }
+
+        // نظام تكبير النصوص والعناصر
+        function adjustSize(value) {
+            const sizeLabels = {
+                '0.8': 'صغير جدًا',
+                '1': 'عادي',
+                '1.2': 'كبير',
+                '1.4': 'كبير جدًا',
+                '1.6': 'ضخم',
+                '1.8': 'ضخم جدًا',
+                '2': 'عملاق',
+                '3': 'كبير جدًا جدًا'
+            };
+            
+            document.documentElement.style.setProperty('--text-size', `${value * 16}px`);
+            document.documentElement.style.setProperty('--icon-scale', value);
+            
+            // تحديث التسمية
+            const sizeLabel = document.getElementById('sizeLabel');
+            const newSize = sizeLabels[value] || sizeLabels['1'];
+            sizeLabel.textContent = newSize;
+            
+            // إعلان تغيير الحجم
+            if (narratorActive) {
+                announce(`تم تغيير حجم النص إلى ${newSize}`);
+            }
+        }
+
+        // --- MODIFIED LOGIN FUNCTION ---
+// In login.html, find this function and replace it with the code below.
+
+async function handleLogin() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorMessageElement = document.getElementById('errorMessage');
+    errorMessageElement.textContent = '';
+
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            // Announce error if narrator is active
+            if (narratorActive) {
+                announce(result.message || 'فشل تسجيل الدخول');
+            }
+            throw new Error(result.message || 'فشل تسجيل الدخول. حاول مرة أخرى.');
+        }
+
+        // --- NEW SIMPLIFIED REDIRECT LOGIC ---
+        
+        // 1. Announce success
+        if (narratorActive) {
+            announce("تم تسجيل الدخول بنجاح. جاري توجيهك.");
+        }
+
+        // 2. Save the token to sessionStorage for auto-logout.
+        sessionStorage.setItem('authToken', result.token);
+        sessionStorage.setItem('user', JSON.stringify(result.user));
+        
+        // 3. Check the user's role and redirect.
+        if (result.user && result.user.role === 'admin') {
+            // If admin, go to the dashboard.
+            window.location.href = 'unidashboard.html';
+        } else {
+            // If student, ALWAYS start the setup process.
+            window.location.href = 'cuntryflag.html'; 
+        }
+        // --- END OF NEW LOGIC ---
+
+    } catch (err) {
+        errorMessageElement.textContent = err.message || 'حدث خطأ غير متوقع.';
+    }
+}
+function announce(message) {
+            if (!narratorActive) return;
+            
+            stopReading();
+            
+            const speech = new SpeechSynthesisUtterance();
+            speech.text = message;
+            speech.lang = 'ar-SA';
+            speech.rate = 0.9;
+            
+            window.speechSynthesis.speak(speech);
+            currentSpeech = speech;
+        }
+
+        function readElement(element) {
+            if (!narratorActive) return;
+            
+            stopReading();
+            
+            let text = '';
+            
+            if (element.getAttribute('aria-label')) {
+                text = element.getAttribute('aria-label');
+            } else if (element.innerText) {
+                text = element.innerText;
+            } else if (element.value) {
+                text = element.value;
+            } else if (element.alt) {
+                text = element.alt;
+            }
+            
+            if (text) {
+                const speech = new SpeechSynthesisUtterance();
+                speech.text = text;
+                speech.lang = 'ar-SA';
+                speech.rate = 0.9;
+                
+                window.speechSynthesis.speak(speech);
+                currentSpeech = speech;
+            }
+        }
+
+        function stopReading() {
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+                currentSpeech = null;
+            }
+        }
+
+        // يمكن تفعيل هذه الوظائف من خلال ساعة الأردوينو
+        function enableNarrator() {
+            narratorActive = true;
+            announce('تم تفعيل نظام القراءة');
+        }
+
+        function disableNarrator() {
+            narratorActive = false;
+            stopReading();
+        }
+
+        function toggleNarrator() {
+            narratorActive = !narratorActive;
+            announce(narratorActive ? 'تم تفعيل نظام القراءة' : 'تم إيقاف نظام القراءة');
+        }
+    </script>
+</body>
+</html>
